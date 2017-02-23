@@ -13,13 +13,15 @@ int main()
 	std::vector<float> v = std::vector<float>();
 	std::chrono::time_point<std::chrono::system_clock> start, end;
 	double avg = 0.0;
-	int n = 1500000000;
+	int n = 15000000;
 	int maxx = 1000;
 	int minn = 10;
 	for (int i = 0; i < n; i++) {
 		v.push_back((float)(rand() % maxx + minn));
 	}
-	
+	std::chrono::duration<double> elapsed_seconds = end - start;
+
+	/*
 	std::cout << "serial avg \n";
 	start = std::chrono::system_clock::now();
 
@@ -27,7 +29,6 @@ int main()
 		avg += v[i];
 	}
 	end = std::chrono::system_clock::now();
-	std::chrono::duration<double> elapsed_seconds = end - start;
 	std::cout << avg / n << " \n";
 	std::cout << elapsed_seconds.count() << " s\n";
 
@@ -78,14 +79,42 @@ int main()
 	elapsed_seconds = end - start;
 	std::cout << min << " \n";
 	std::cout << elapsed_seconds.count() << " s\n";
-
+	*/
 	system("pause");
 
+	std::vector<int> even;
 
+	std::cout << "serial select even \n";
+	start = std::chrono::system_clock::now();
+	for (int i = 0; i < n; i++) {
+		if ((int)v[i] % 2 == 0) even.push_back((int)v[i]);
+	}
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end - start;
+	std::cout << elapsed_seconds.count() << " s\n";
+	even.clear();
+	std::cout << "parallel select even \n";
+	start = std::chrono::system_clock::now();
+	
+#pragma omp parallel
+	{
+	std::vector<int> loceven;
+#pragma omp for 
+	for (int i = 0; i < n; i++) {
+		if ((int)v[i] % 2 == 0) loceven.push_back((int)v[i]);
+	}
+#pragma omp critical
+	{
+		for (int i = 0; i < loceven.size(); i++) {
+			even.push_back(loceven[i]);
+		}}
+	}
 
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end - start;
+	std::cout << elapsed_seconds.count() << " s\n";
 
-
-
+	system("pause");
 
 	return 0;
 }
