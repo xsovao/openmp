@@ -6,6 +6,7 @@
 #include <chrono>
 #include <iostream>
 #include <stdlib.h>
+#include "omp.h"
 
 int main()
 {
@@ -98,16 +99,30 @@ int main()
 	
 #pragma omp parallel
 	{
-	std::vector<int> loceven;
+		std::vector<int> loceven;
 #pragma omp for 
-	for (int i = 0; i < n; i++) {
-		if ((int)v[i] % 2 == 0) loceven.push_back((int)v[i]);
-	}
+		for (int i = 0; i < n; i++) {
+			if ((int)v[i] % 2 == 0) loceven.push_back((int)v[i]);
+		}
+
+		/*UNORDERED
 #pragma omp critical
-	{
-		for (int i = 0; i < loceven.size(); i++) {
-			even.push_back(loceven[i]);
-		}}
+		{
+			for (int i = 0; i < loceven.size(); i++) {
+				even.push_back(loceven[i]);
+			}}*/
+
+		/*ORDERED*/
+#pragma omp for ordered schedule(static,1)
+		for (int i = 0; i < omp_get_num_threads(); i++) {
+
+#pragma omp ordered
+			{
+				for (int i = 0; i < loceven.size(); i++) {
+					even.push_back(loceven[i]);
+				}
+			}
+		}
 	}
 
 	end = std::chrono::system_clock::now();
